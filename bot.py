@@ -1,10 +1,14 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from flask import Flask
+import threading
 import os
 
 intents = discord.Intents.default()
 intents.guilds = True
+
+app = Flask("")
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -12,10 +16,17 @@ class MyBot(commands.Bot):
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        # Sync commands globally (or you can restrict to guild for faster updates)
         await self.tree.sync()
 
 bot = MyBot()
+
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 @bot.event
 async def on_ready():
@@ -32,7 +43,6 @@ async def perms(interaction: discord.Interaction):
     embed = discord.Embed(title=f"Roles and Permissions in {guild.name}", color=discord.Color.blue())
 
     for role in guild.roles:
-        # List of permission names for this role where the permission is True
         permissions = [perm[0].replace('_', ' ').title() for perm in role.permissions if perm[1]]
         perms_string = ", ".join(permissions) if permissions else "No Permissions"
         embed.add_field(name=role.name, value=perms_string, inline=False)
@@ -40,5 +50,8 @@ async def perms(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 if __name__ == "__main__":
-    TOKEN = os.getenv("DISCORD_BOT_TOKEN")  # Set your token as env variable DISCORD_BOT_TOKEN
+    # Start Flask in a thread
+    threading.Thread(target=run_flask).start()
+
+    TOKEN = os.getenv("DISCORD_BOT_TOKEN")
     bot.run(TOKEN)
