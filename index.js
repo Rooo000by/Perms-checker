@@ -4,6 +4,7 @@ import express from 'express';
 
 const app = express();
 const port = process.env.PORT || 10000;
+client.login(process.env.DISCORD_BOT_TOKEN);
 
 // Setup basic webserver for Render health checks
 app.get('/', (req, res) => {
