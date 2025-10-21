@@ -1,10 +1,15 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, Partials, REST, Routes, EmbedBuilder, PermissionsBitField } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, REST, Routes, EmbedBuilder } from 'discord.js';
 import express from 'express';
 
 const app = express();
 const port = process.env.PORT || 10000;
-client.login(process.env.DISCORD_BOT_TOKEN);
+
+// Discord client with intents to read guild roles
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds],
+  partials: [Partials.GuildMember]
+});
 
 // Setup basic webserver for Render health checks
 app.get('/', (req, res) => {
@@ -13,12 +18,6 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Express server started on port ${port}`);
-});
-
-// Discord client with intents to read guild roles
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
-  partials: [Partials.GuildMember]
 });
 
 // Register slash command on bot startup
@@ -78,7 +77,12 @@ client.on('interactionCreate', async interaction => {
       const perms = [];
 
       for (const [permName, hasPerm] of Object.entries(role.permissions.toJSON())) {
-        if (hasPerm) perms.push(permName.replace(/_/g, ' ').toLowerCase().replace(/\b(\w)/g, c => c.toUpperCase()));
+        if (hasPerm) perms.push(
+          permName
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b(\w)/g, c => c.toUpperCase())
+        );
       }
 
       embed.addFields({ name: role.name, value: perms.length ? perms.join(', ') : 'No Permissions', inline: false });
@@ -88,4 +92,5 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
+// LOGIN only ONCE here, after client is declared
 client.login(process.env.DISCORD_BOT_TOKEN);
